@@ -1,7 +1,6 @@
 from origin import load_data,train_test_spilt
 import numpy as np
 import time
-import numba
 
 class fit_model:
 
@@ -83,7 +82,7 @@ def get_mean_of_train(train):
             count+=1
     return sum_rate/count
 
-@numba.jit(nopython=False)
+
 def svdpp_train(train,test,set_users,set_items,n_epoch,lr,k,lamb):
     """
 
@@ -106,12 +105,8 @@ def svdpp_train(train,test,set_users,set_items,n_epoch,lr,k,lamb):
                 error=real_rate-predict_rate
                 # 梯度下降
                 model.gradient_desc(user_no,item_no,error,lr,lamb)
-            if user_no %5==0:
+            if user_no %10==0:
                 print('user progress:[{}/{}]'.format(user_no, len(train)))
-            if user_no==300:
-                end_time = time.time()
-                print('前300个用户，用时{}秒'.format(end_time - start_time))
-                return
         # 完成一轮迭代
         rmse_in_train = svdpp_eval(train, model)
         rmse_in_test = svdpp_eval(test, model)
