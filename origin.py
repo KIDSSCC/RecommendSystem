@@ -1,6 +1,6 @@
 import time
 import random
-
+import torch
 
 def load_data():
     """
@@ -78,4 +78,5 @@ if __name__ =='__main__':
     for user_no,items in train.items():
         count.append(len(items))
     sorted_list=sorted(count,reverse=True)
-    print(sorted_list[:100])
+
+    print(sorted_list)
