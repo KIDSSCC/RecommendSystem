@@ -1,7 +1,7 @@
 from origin import load_data,train_test_spilt
 import numpy as np
 import time
-
+import numba
 
 class fit_model:
 
@@ -45,7 +45,8 @@ class fit_model:
         if num_of_items==0:
             res=avg+0.1
         else:
-            item_list=[item for item,_ in items.items()]
+            # item_list=[item for item,_ in items.items()]
+            item_list=list(items.keys())
             avg=np.mean(self.item_hidden[item_list],axis=0)
             res=avg/np.sqrt(num_of_items)
         self.curr_mean_item=res
@@ -62,7 +63,8 @@ class fit_model:
         # 更新隐式向量列表
         items=self.train[user_no]
         sqrt_len=np.sqrt(len(items))
-        item_list=[item for item,_ in items.items()]
+        # item_list=[item for item,_ in items.items()]
+        item_list=list(items.keys())
         tmp_array=np.array([self.qi[no] for no in item_list])
         self.item_hidden[item_list]+=lr*(error*tmp_array/sqrt_len-lamb*self.item_hidden[item_list])
 
@@ -81,6 +83,7 @@ def get_mean_of_train(train):
             count+=1
     return sum_rate/count
 
+@numba.jit(nopython=False)
 def svdpp_train(train,test,set_users,set_items,n_epoch,lr,k,lamb):
     """
 
