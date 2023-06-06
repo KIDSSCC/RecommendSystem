@@ -1,6 +1,6 @@
 from origin import load_data,train_test_spilt
 import numpy as np
-
+import time
 
 
 class fit_model:
@@ -96,6 +96,7 @@ def svdpp_train(train,test,set_users,set_items,n_epoch,lr,k,lamb):
     :param lamb: 梯度下降参数
     :return:训练得到的模型
     """
+    start_time = time.time()
     model=fit_model(train,set_users,set_items,k)
     for epoch in range(n_epoch):
         for user_no,items in train.items():
@@ -106,6 +107,10 @@ def svdpp_train(train,test,set_users,set_items,n_epoch,lr,k,lamb):
                 model.gradient_desc(user_no,item_no,error,lr,lamb)
             if user_no %5==0:
                 print('user progress:[{}/{}]'.format(user_no, len(train)))
+            if user_no==300:
+                end_time = time.time()
+                print('前300个用户，用时{}秒'.format(end_time - start_time))
+                return
         # 完成一轮迭代
         rmse_in_train = svdpp_eval(train, model)
         rmse_in_test = svdpp_eval(test, model)
