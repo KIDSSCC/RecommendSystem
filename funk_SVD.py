@@ -15,7 +15,6 @@ class fit_model:
 
     def predict_score(self,user_no,item_no):
         basic=self.pu[user_no]@self.qi[item_no]
-        # print('pu is {} ,qi is {},bu is {}.qi is {}'.format(self.pu[user_no],self.qi[item_no],self.bias_u[user_no],self.bias_i[item_no]))
         return basic+self.mean+self.bias_u[user_no]+self.bias_i[item_no]
 
     def gradient_desc(self,user_no,item_no,error,lr,lamb):
@@ -86,5 +85,5 @@ def funk_svd_eval(test,fit_model):
 if __name__ =='__main__':
     set_users,set_items,sparse_matrix=load_data()
     train,test=train_test_spilt(sparse_matrix)
-    funk_svd_train(train,test,set_users,set_items,50,5e-4,30,0.02)
+    funk_svd_train(train,test,set_users,set_items,50,5e-4,100,1.0)
 
