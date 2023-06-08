@@ -1,3 +1,5 @@
+import random
+
 from origin import load_data,train_test_spilt
 import numpy as np
 import time
@@ -60,12 +62,14 @@ class fit_model:
         self.pu[user_no] += lr * (error * old_qi - lamb * old_pu)
         self.qi[item_no] += lr * (error * (old_pu+self.curr_mean_item[0]) - lamb * old_qi)
         # 更新隐式向量列表
-        items=self.train[user_no]
-        sqrt_len=np.sqrt(len(items))
-        # item_list=[item for item,_ in items.items()]
-        item_list=list(items.keys())
-        tmp_array=np.array([self.qi[no] for no in item_list])
-        self.item_hidden[item_list]+=lr*(error*tmp_array/sqrt_len-lamb*self.item_hidden[item_list])
+        random_num=random.random()
+        if random_num<0.1:
+            items=self.train[user_no]
+            sqrt_len=np.sqrt(len(items))
+            # item_list=[item for item,_ in items.items()]
+            item_list=list(items.keys())
+            tmp_array=np.array([self.qi[no] for no in item_list])
+            self.item_hidden[item_list]+=lr*(error*tmp_array/sqrt_len-lamb*self.item_hidden[item_list])
 
 
 def get_mean_of_train(train):
@@ -102,7 +106,7 @@ def svdpp_train(train,test,set_users,set_items,n_epoch,lr,k,lamb):
         for user_no,items in train.items():
             for item_no,real_rate in items.items():
                 predict_rate=model.predict_score(user_no,item_no)
-                error=real_rate-predict_rate
+                error=real_rate/10-predict_rate
                 # 梯度下降
                 model.gradient_desc(user_no,item_no,error,lr,lamb)
             if user_no %10==0:
@@ -120,7 +124,7 @@ def svdpp_eval(test,fit_model):
     for user_no,items in test.items():
         for item_no,real_rate in items.items():
             predict_rate=fit_model.predict_score(user_no,item_no)
-            sum_error+=(real_rate-predict_rate)**2
+            sum_error+=(real_rate-predict_rate*10)**2
             count+=1
 
     return np.sqrt(sum_error/count)

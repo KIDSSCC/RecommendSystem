@@ -1,6 +1,8 @@
 import time
 import random
-import torch
+
+import numpy as np
+from scipy.spatial import KDTree
 
 def load_data():
     """
@@ -70,13 +72,67 @@ def train_test_spilt(matrix,sample_rate=0.2):
     print('训练集数据划分，用时{}秒'.format(end_time-start_time))
     return train_data,test_data
 
+def load_attribute(bi):
+    start=time.time()
+    file_path='data/itemAttribute.txt'
+    attr_dict=dict()
+    with open(file_path,'r') as f:
+        line=f.readline()
+        debug=10000
+        while line:
+            item,att1,att2=line.split('|')
+            if int(item)>debug:
+                debug+=10000
+                print(item)
+            if 'None' in att1:
+                att1=-1
+            if 'None' in att2:
+                att2=-1
+            if int(item) in bi:
+                attr_dict[int(item)]=[int(att1),int(att2)]
+            line=f.readline()
+    index2no=dict()
+    no2index=dict()
+    attr_array=np.zeros((len(attr_dict),2))
+    index=0
+    for item,attr in attr_dict.items():
+        index2no[index]=item
+        no2index[item]=index
+        attr_array[index] = attr
+        index+=1
+
+    end=time.time()
+    print('加载属性，用时{} s'.format(end-start))
+    return index2no,no2index,attr_array
+
+def k_neighbour(item_no,no2index,index2no,attr_array,kdtree,k):
+    if item_no not in no2index:
+        return []
+    else:
+        index=no2index[item_no]
+        dist,ind=kdtree.query(attr_array[index],k)
+        item_list=[index2no[i] for i in ind ]
+        return item_list
+
+def neighbour_item(bi):
+    res=dict()
+    index2no,no2index,attr_array=load_attribute(bi)
+    kdtree=KDTree(attr_array)
+    for item in bi.keys():
+        # 对于当前的每一个物品
+        if item not in no2index:
+            res[item]=[]
+        else:
+            index = no2index[item]
+            dist, ind = kdtree.query(attr_array[index], 5)
+            item_list = [index2no[i] for i in ind]
+            res[item]=item_list
+    return res
+
+
 
 if __name__ =='__main__':
     set_users,set_items,sparse_matrix=load_data()
     train,test=train_test_spilt(sparse_matrix)
-    count=[]
-    for user_no,items in train.items():
-        count.append(len(items))
-    sorted_list=sorted(count,reverse=True)
-
-    print(sorted_list)
+    index2no,no2index,attr=load_attribute(set_items)
+    pass

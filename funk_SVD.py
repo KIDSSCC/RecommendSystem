@@ -1,7 +1,9 @@
 from origin import load_data,train_test_spilt
 import numpy as np
+import pickle
+import warnings
 
-
+warnings.filterwarnings("error", category=RuntimeWarning)
 class fit_model:
 
     def __init__(self,mean,bias_u,bias_i,pu,qi):
@@ -13,6 +15,7 @@ class fit_model:
 
     def predict_score(self,user_no,item_no):
         basic=self.pu[user_no]@self.qi[item_no]
+        # print('pu is {} ,qi is {},bu is {}.qi is {}'.format(self.pu[user_no],self.qi[item_no],self.bias_u[user_no],self.bias_i[item_no]))
         return basic+self.mean+self.bias_u[user_no]+self.bias_i[item_no]
 
     def gradient_desc(self,user_no,item_no,error,lr,lamb):
@@ -22,6 +25,8 @@ class fit_model:
         old_qi=self.qi[item_no]
         self.pu[user_no] += lr * (error * old_qi - lamb * old_pu)
         self.qi[item_no] += lr * (error * old_pu - lamb * old_qi)
+
+
 
 
 def get_mean_of_train(train):
@@ -34,22 +39,21 @@ def get_mean_of_train(train):
     return sum_rate/count
 
 def funk_svd_train(train,test,set_users,set_items,n_epoch,lr,k,lamb):
+    mean = get_mean_of_train(train)
+    # init=np.sqrt((mean-1)/k)
     bias_u = dict()
     bias_i = dict()
     pu = dict()
     qi = dict()
     for user_no in set_users:
         bias_u[user_no]=0
-        pu[user_no]=np.random.rand(k)
+        pu[user_no]=np.random.normal(0, .1, k)
     for item_no in set_items:
         bias_i[item_no]=0
         qi[item_no]=np.random.rand(k)
-    mean=get_mean_of_train(train)
+
     model=fit_model(mean,bias_u,bias_i,pu,qi)
-    curr_rmse = 1e7
     for epoch in range(n_epoch):
-        if epoch==10:
-            lr=lr/10
         for user_no,items in train.items():
             for item_no,real_rate in items.items():
                 predict_rate=model.predict_score(user_no,item_no)
@@ -62,6 +66,9 @@ def funk_svd_train(train,test,set_users,set_items,n_epoch,lr,k,lamb):
         rmse_in_train=funk_svd_eval(train,model)
         rmse_in_test=funk_svd_eval(test,model)
         print('epoch:[{}/{}],RMSE in train is :{} , and RMSE in test is {}'.format(epoch,n_epoch,rmse_in_train,rmse_in_test))
+        pickle_path='models/fit_model'+str(epoch)+'.pkl'
+        with open(pickle_path,'wb') as f:
+            pickle.dump(fit_model,f)
 
 def funk_svd_eval(test,fit_model):
     sum_error=0
@@ -79,6 +86,5 @@ def funk_svd_eval(test,fit_model):
 if __name__ =='__main__':
     set_users,set_items,sparse_matrix=load_data()
     train,test=train_test_spilt(sparse_matrix)
-    funk_svd_train(train,test,set_users,set_items,20,5e-4,3,0.02)
-
+    funk_svd_train(train,test,set_users,set_items,50,5e-4,30,0.02)
 
